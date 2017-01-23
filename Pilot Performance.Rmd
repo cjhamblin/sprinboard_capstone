@@ -1,0 +1,279 @@
+---
+title: "Objective Measures of Pilot Performance"
+author: "Chris Hamblin"
+date: "January 20, 2017"
+output: html_document
+---
+
+###Introduction
+
+A persistent problem within aviation is the lack of objective measures of pilot performance.  Currently the aviation community relies on repetitive periodic retesting of pilots by designated pilot examiners. Pilot examiners are well trained expert pilots but differences between instructors and the subjective nature of the evaluation process results in inconsistencies.  Objective measures of pilot performance would eliminate the subjectivity of pilot proficiency evaluations.
+
+Objective measures of pilot performance may also enable more efficient and cost effective training programs. All pilots must meet minimum performance standards in order to receive their licenses and ratings. In addition, pilots must periodically and demonstrate their proficiency to designated pilot examiners in an effort to ensure pilots are maintaining their skills.  This is an inefficient, expensive, and inconvenient process for pilots and their employers alike. 
+
+###Objective Measures of Pilot Performance
+
+The objective measure of pilot performance has a relatively long history of research (Johnson, Rantanen & Talleur, 2004).  Despite the long history there has been relatively few studies because, until recently, obtaining and analyzing avionics data was a challenging and expensive undertaking (Hall & Brannick, 2008). However, these challenges are slowly being overcome. Wireless data communication capabilities onboard the airplane are making data more accessible and 'Big Data' analytics is making statistical analysis of the data more insightful. The intersection of these technologies provide promise that timely and cost effective assessment of pilot performance.  
+
+Until recently, the challenges of obtaining and analyzing avionics data has resulted in a relatively small number of distinct objective metrics. Johnson, Rantanen & Talleur, (2004) provide a review of static metrics (e.g., standard deviation, root mean square error, etc.) traditionally used in measuring pilot performance and argue for the use of time series analysis. Given the dynamic nature of piloting an airplane and the inherent structure of avionics data, time series analysis methods provide the ability to uncover patterns in the data that would not be revealed using static measures. This study seeks to advance the time series methodologies used by Johnson et al. (2004) and Rantanen et al. (2004) as well as evaluate a new metric within the context of the approach to land and landing phases of flight. 
+
+Johnson et al. (2004) and Rantanen et al. (2004) performed several analyses using Fourier and autocorrelation metrics. The hypothesis was that better pilots are better able to anticipate future control inputs which results in more frequent small control inputs while poor pilots make less frequent larger control inputs. Periodic components of the control inputs were measured using Fourier analyses.
+
+Autocorrelation metrics measure how well a subsequent measure can be predicted from a previous value in the time series. Time series flight parameter values from a pilot who is aware of the state of the airplane and can predict its future state will generate autocorrelations that are greater those pilots who are not aware. Hence, time series data of better pilots produce autocorrelations that decay less quickly to zero than less skillful pilots. To quantify the decay of autocorrelation coefficients, the slope of the first 10 autocorrelation coefficients was determined by regression. Sum of squares error of the fitted regression line was also included as a second autocorrelation metric. A third novel metric was also created to measure the time after which the autocorrelation drops to zero. We hypothesized that the measure of time would provide an additional measure of performance and take advantage of the higher frequency of the data recordings. The hypothesis being that better performances would record less time with autocorrelations at or below zero compared to poor performances. 
+
+Previous studies utilized the slope of the regression line that fits the decay of autcorrelations at different time lags as a measure of pilot performance. It was hypothesized that better pilots manage to predict the future states of the airplaine better, so shallower slopes - indicating a slow decay of autocorrelation to zero - would indicate a longer lasting connection between the past and actual control inputs. The data used in previous studies was recorded at 1 Hz, one measurement per second. Our data set provided a potential advantage in that it was recorded at 80Hz, 80 measurments per second. Having a fine-grained measurement at our disposal (80Hz vs. 1Hz in the original 2004 study) enabled us to demonstrate that the decay of autocorrelation in flight parameters is rarely linear in time, indicating that linear regression based measures must be applied with caution. Upon this observation, it was decided to introduce a new time-series based measure: the lag in seconds after which the autocorrelation for a given flight parameters falls bellow zero. This measure is completely independent of the functional form that describes a decay in autocorrelation.
+
+###The Data Set
+
+The approach to land and landing phases of flight are the two most critical phase of flight. These phases are characterized by high levels of cognitive and physical workload for the crew. The stressful and demanding conditions of these phases of flight test the limits of pilot's abilities as evident by the accident rates (see Figure 1). Accidents occur most often during these phases accounting for 49% of all fatal accidents and onboard fatalities (Boeing, 2016). For these reasons, researchers and flight instructors are particularly interested in the objective measures of pilot performance during these phases. 
+
+![Figure 1. Fatalities by Phase of Flight.](http://www.planecrashinfo.com/images/phase%20flight.jpg)
+
+
+The data set used in this project consists of proprietary flight data collected during 89 approaches to land at the San Francisco Airport (KSFO Runway 19L). The data within each comma separated file is time series data generated by the airplane's avionics and recorded using a proprietary avionics interface device. The data recordings start at various points during the final approach to land and collect data through the landing and runway rollout. This restricts the data analysis to roughly the last 2-4 minutes of each flight but recording at 80Hz results in each file consisting of 6000-8000 data points. The data includes position of the airplane (e.g., altitude, latitude, and longitude), attitude of the airplane (e.g., pitch, roll, yaw, etc.), performance data (airspeed, vertical speed, vertical acceleration, pitch rate, roll rate, yaw rate, etc.), as well as various system state data (e.g., landing gear position, weight on wheels sensor state, flap position, etc.). A list of the data and a brief descrption are provided in the table below.
+
+Variable|Description|unit of measure
+--------|-----------|---------------
+Vertical Speed|Rate of change in the vertical axis|ft./min
+Vertical Acceleration|Rate of change in the vertical axis| G
+Pitch Angle|Attitude of the airplane in the Lateral axis| Degrees
+Pitch Rate|Rate of change around the Lateral axis|degrees/sec.
+Roll Angle|Attitude of the airplane in the Longitudinal axis| Degrees
+Roll Rate|Rate of change around the Longitudinal axis|degrees/sec.
+Heading|Direction of the airplane|Degrees
+Yaw Rate|Rate of change around the vertical axis|degrees/sec.
+Calibrated Airspeed|Speed of the airplane corrected for error|knots
+Altitude|Height of the airplane above the terrain|ft.
+Latitude|Geospatial position of the airplane|decimal
+Longitude|Geospatial position of the airplane|decimal
+Glideslope Deviation|Vertical deviation from flight path| ft. 
+Localizer Deviation|Lateral deviation from flight path| ft.
+weight on wheels Left|state of landing gear weight sensor|binary
+Weight on Wheels Right|state of the landing gear weight sensor|binary
+
+
+###Dependent variables
+In an effort to explore the potential insights afforded by avionics data we evaluated a variety of continuous and categorical dependent variables. Continuous variables measuring raw sensor data, their variance, and standard deviations were used to measure approach stability, landing precision, and landing quality. We also made attempts to categorize various elements pilot performance. 
+
+####Defining Approach to Land and Landing Phases of flight
+The variables within the data set provide the ability to objectively measure pilot performance during the approach to land and landing phases of flight. Though often confounded, it is improtant to note that approach to land and landing are two distinct phases of flight. Aviation regulatory entities (e.g., FAA & EASA) state the approach phase as begins at the Initial Approach Fix (IAF) navigation point and  ends with the landing flare. For this study, data recording began after the IAF so the approach to land phase was defined as the final approach to the runway measured from the beginning of data collection to an altitude of 50 ft. above the runway. Landing was defined as the moment in time when the main landing gear contact the runway as indicated by the weight on wheels (WOW sensor). 
+
+####Approach Precision
+During the approach to land, pilot performance is measured by the navigation precision and the stability of the airplane. Navigation precision is calculated as the difference between the published approach path and the airplane's actual path. Dependent variables include glideslope deviation and localizer deviation. Glideslope deviation is defined as the vertical deviation from the defined approach path while localizer deviation is the lateral deviation from the approach path.  
+
+####Approach Stability 
+Approach stability is commonly considered one of the most critical measures of pilot performance. Aviation authorities consider an approach stable only if all the following elements are achieved before or when reaching the applicable stabilization height:
+
+* Aircraft is on the correct flight path;
+* Only small changes in heading and pitch;
+* Aircraft speed is not more than 20 knots above designated approach speed and not less than the designated approach speed;
+* Sink rate no greater than 1000 ft./min;
+* Power setting is appropriate for the aircraft configuration,
+* Approach precision is appropriate for the associated instrument landing system.
+
+Failure to meet these criteria or continuing an unstabilized approach is a causal factor in 40% of all approach and landing accidents (Airbus, 2006). Generally speaking, stability of the approach is considered to be the variance of the aircraft across its three degrees of freedom. A stabilized approach is determined by pilots staying within given performance parameters. Dependent variables include: airspeed, vertical speed, vertical acceleration, pitch angle, pitch rate, roll angle, roll rate, heading,and yaw rate.  
+
+Approach stability was categorized ordinally across several variables. Many of these variables are defined by aviation authorities (e.g., FAA & EASA) while others are ambiguous. For example, criteria for airspeed and sink rate are quantitatively defined while heading, pitch, and roll stability are not. For those variables that are not defined we sought recommended values from a flight test pilot and FAA examiner. Stability criteria used in this analysis are given below:
+
+Criteria|Limits
+--------|------
+Heading stability| 10 degrees left or right of approach heading
+Pitch stability| >= 3 degrees pitch down & <= 5 degrees pitch uppitch up
+Roll stability| +/- 5 degrees
+Airspeed|  >= 126 knots & <= 146 knots  
+Descent rate| <= 1000 ft./min.
+
+Exceeding any of these values resulted in an "Unstable" categorization for that criteria and the overall approach. The number of unstable criteria was also counted.
+
+####Landing Precision
+We considered two different aspects of the landing phase of flight: 1) landing precision, and 2) landing quality. Landing precision is defined as the aircraft's touchdown point as measured by the distance from the runway's threshold and distance from the runway centerline. Precision of the runway landing points may be correlated with approach stability as Airbus (2006) reports that in 75% of the off-runway touchdown, tail strike or runway excursion/overrun accidents, the major cause was an unstable approach.The touchdown point of the landing was calculated using latitude and longitude positions of the airplane when both the left and right main landing gear detected 'weight on wheels'. 
+
+Continuous measures of landing precision was measured and the Touch down point's distance from the runway threshold and absolute distance from the centerline.  We also categorized landing precision as follows:
+
+Precision           | Distance from Threshold (ft.)	| Distance for Centerline (ft.)
+--------------------|-------------------------------|----------------------------
+Optimal Precision 	| >= 700 & <= 2200 		          | +/- 25 
+Good Precision    	| >= 200 & <= 2700    		      | +/- 50
+Out of Bounds     	| < 200 & > 2700   		          | > 50
+
+####Landing Quality 
+As most airline passangers can attest, the quality of the landing is judged by the *smoothness* of the landing. That is, how gentle or how jarring the was the airplane's transition onto the runway. Landings that are excessivly jarring are disconcerting to the passengers and in extreme cases can cause structural damage to the airplane. Landings in which the vertical acceleration of the airplane exceeds a specific gravitational load (measured in Gs) require a structural inspection. Aircraft manafacturers like Boeing and Airbus consider a vertical acceleration greater than 1.7Gs to be a *Hard Landing* which requires an inspection of the airplane before it can be returned to service. Using this standard, additional categories were added in an attempt to asses pilot performance. Landings with vertical accelerations between 1.0 and 1.3 would be barely perceptable to the passengers, while landings exceeding 1.7G would alarm the passengers potentially causing physical harm. 
+
+For this study landing quality as measured by vertical acceleration and was categorized as follows:
+
+TQ Quality	| Vertical Acceleration (G)
+------------|--------------------------
+Excellent 	| 1.0-1.3  
+Good    	  | 1.3-1.5    
+Rough     	| 1.5-1.7   
+Hard	      | > 1.7
+
+#####Bounced Landing 
+Bounced landings occur when the airplane lands but becomes airborne for a brief period before landing again. Bounced landings occur for a variety of reasons but generally indicate that the pilots failed to control the speed of the aircraft at landing or landed too abruptly. For this study, hard landingswere detected by measuring the number state changes detected by the WOW sensor. A normal landing will detect a single WOW state change. A bounced landing will be indicated if the left or right WOW sensor detects more than one state change. Landings were categorized as "Normal" or "Bounced".
+
+#####Coordinated Landings
+Coordainated landings are a general indication of the stability of the airplane at landing. As the speed of the airplane slows it becomes less responsive to control inputs of the pilot so the ability to anticipate and make the necessary control inputs becomes more critical. If the airplane becomes uncoordinated in one of the three axis it may result in an unstable or unsafe landing. For this study, coordinated landings are indicated by simultaneous detection of WOW by the left and right main landing gear. Uncoordinated landings are indicated when there is a discrepancy between the left and right main landing gear WOW sensor. Landings were categorized as "Coordinated" or "Uncoordinated". The time duration of the discrepancy between the left and right WOW sensors was also calculated.
+
+A summary of the the continuous dependent variables is provided in the table below
+
+Dependent Variable|Type|Scale
+------------------|----|-----
+Heading|Continuous|Degrees
+Yaw Rate|Continuous|Deg./sec
+Pitch|continuous|Degrees
+Pitch Rate|Continuous|Deg./sec
+Roll|continuous|Degrees
+Roll Rate|Continuous|Deg./sec
+Airspeed|Continuous|knots
+Descent Rate|Continuous|ft./sec
+Vertical Acceleration|Continuous| G
+Distance to Threshold|Continous| ft.
+Distance to Center Line|Continuous| ft.
+
+
+Summary of the categorical dependent variables is provided in the table below
+
+Dependent Variable|Type|Levels
+------------------|----|--------
+Heading Stability| Binary|Stable, Unstable
+Pitch Stability| Binary|Stable, Unstable
+Roll Stability|Binary|Stable, Unstable
+Airspeed Stability|Binary|Stable, Unstable
+Descent Stability|Binary|Stable, Unstable
+Overall Approach Stability|Binary|Stable, Unstable
+Landing Precision|Ordinal|Optimal, Good, Out of Bounds
+Landing Quality|Ordinal|Excellent, Good, Rough, Hard
+Bounced Landing|Binary|Normal, Bounced
+Coordinated Landing|Binary|Coordinated, Uncoordinated
+
+###Analysis
+
+R scripts were written to process the data from each flight's data file and return the continuous and categorical variables described above. Results were written to a single data frame. Additional analysis was done to extract features of the data and calculate the autocorrelation-based measures.  These results were combined with the summary landings data for analysis.  
+
+####Cleaning and Preparing Data
+``` {r echo = T}
+# setwd("/Data Science/Springboard/Capstone/Project")
+dataSet <- read.csv('dataSet.csv',
+                    header = T,
+                    row.names = 1,
+                    stringsAsFactors = F)
+```
+
+
+One of the flights was eliminated from the final analysis due to incomplete dataset. Another flight was eliminated because of an outlying landing point beyond three standard deviations as shown in the boxplot below.
+```{r CH_Models, include=TRUE}
+boxplot(dataSet$Dist2Thresh, main="Distance to Threshold", ylab="Distance (ft.)")
+```
+
+
+####Descriptive Statistics
+
+
+#####Approach Stability
+
+Stability of the approach was categorzed as either stable or unstable using the criteria described above. 
+
+Axis          |Stable |Unstable
+--------------|-------|--------
+All Approaches|58     |29
+Heading       |87     |0
+Pitch         |77     |10
+Roll          |66|21
+Airspeed|86|1
+Descent |85|2
+
+
+The number of unstable axes for each approach was also calculated. 
+
+Unstable Axes|0|1 |2 |3 |
+-------------|-|-|-|-|
+Count|58|25|3|1|
+ 
+#####Landing Precision
+Landing precision was measured continously by measuring the distance from the landing point to the runway threshold and the runway centerline.Summary statistics are described below
+
+```{r}
+summary(dataSet$Dist2Thresh)
+summary(dataSet$Dist2CL)
+```
+Landing precision was also measured categorically. A summary of the landings and a plot showing the landing points and their categorizations are shown below.
+
+```{r, warning=FALSE}
+table(dataSet$precision)
+```
+```{r, warning=FALSE}
+landingplot
+```
+####Landing Quality
+
+Summry results measuring of touch down quality (vertical acceleration) are shown below
+
+summary(dataSet$vert_Accel)
+
+Categorical results of landing quality are shown below
+
+Excellent|Good|Rough|Hard
+---------|----|-----|----
+31|28|15|13
+
+####Predictive Statistics
+
+#####Landing Precision
+
+Analyses were conducted to determine if variables of approach stability could be used to predict landing precision. Three time series metrics based on autocorrelation analysis were applied. Linear regressions were conducted to measure the influence of approach stability on the landing distance from threshold and distance from centerline. Unfortunately, these models didn't prove to be terribly insightful. Multiple linear regressions measuring the autocorrelation coefficient's decay to zero and the slope of the autocorrelation, and raw data found many significant coefficients the models were not very powerful. A summary of the linear regressions is shown in the table below. 
+
+Predictors | PRESS | RSE | Adj. R^2| P-value
+-----------|-------|-----|---------|---------
+LagToZero  |95.522|410.1|0.388|2.025e-05
+RegCoeff   |103.474|415.8|0.3708|4.174e-05
+LagToZero + RegCoeff|97.917|363|0.5206|2.484e-06
+
+Similar analyses evaluating the ability to predict the distance to centerline also meaningful significance.
+
+Predictors | PRESS | RSE | Adj. R^2| P-value
+-----------|-------|-----|---------|---------
+LagToZero  |87.245|10.85|0.1916|0.01534
+RegCoeff   |90.132|11.97|0.01438|0.4042
+LagToZero + RegCoeff|88.032|10.3|0.2715|0.009383
+
+However, the same autocorrelation measures seem to show promise when ordinal logistic regresssions were used to predict categorical landing precision. 
+```{r Model 5}
+# - select variables --> modelSet
+modelSet <- cbind(featureCat$Stable_approach,
+                  featureLags,
+                  Precision = criteriaCat$precision)
+
+# - model
+mFit <- clm(Precision ~ .,
+            data = modelSet)
+
+# - inspect model
+summary(mFit)
+
+# - coefficients
+mFit$coefficients
+
+# - cumulative odds ratios:
+# - NOTE: alpha == intecepts ('trasholds'), beta = regression coefficients:
+exp(mFit$beta)
+
+# - Conventional symmetric so-called Wald confidence intervals 
+# - for the parameters are available as:
+confint(mFit, type = 'Wald')
+
+# - Asymmetric confidence intervals for the odds ratios 
+# - based on the Wald statistic are:
+exp(confint(mFit, type = "Wald"))
+
+# - e.g. Hit rate (Accuracy of Classification)
+countHits <- sum(predict(mFit, type = "class")$fit == modelSet$Precision)
+dataPoints <- length(modelSet$Precision)
+hitRate <- countHits/dataPoints
+hitRate
+```
+Using the autocorrelation lag to zero metric. The initial regression found the Lag to zero model provided the best fit as indicated by the lowest Akaike Information Criterion (AIC) value (129.75). There were three regression coefficients with significant p-values less than 0.05 (inertial vertical speed, vertical acceleration, and body pitch rate), and one value approaching significance (localizer deviation = 0.061). An evaluation of the model's precision found a 0.781 hit rate. 
+
+###Summary
+
+Despite relatively few flight data files, the objective measure of pilots performance has proven valuable. The high frequency data collection of 80 Hz seems to provide an advantage over lower recording rates when autocorrelalation metrics are applied. Specifically, the Lag to Zero autocorrelation metric may serve as an effective measure of pilot performance and showed a clear advantage over other metrics that were applied. This is demonstrated by the ordinal logistic regression to determine if approach stability could be used to predict the categorical measure of landing precision. Though working with a relatively small data set of only 89 flights we were able to achieve a 78% hit rate.
+
